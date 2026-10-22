@@ -1,0 +1,250 @@
+/* Palette: #26619c #a8d5e2 #f9a620 #ffd449 #ffefd5 #548c2f #f7f7f7 #b31b1b; neutrals derived. */
+:root {
+  --bg: #fbfbfb;
+  --card: #fbfbfb;
+  --ink: #1f2a37;
+  --muted: #6b7380;
+  --line: #e2ddd3;
+  --wall: #b9ad98;
+  --hatch: #c9c3b8;
+  --free: #548c2f;
+  --partial: #f9a620;
+  --busy: #dedad3;
+  --pick: #26619c;
+  --locked: #ece9e3;
+  --sel: #1f2a37;
+  --off: #ebe8e2;
+  --mine: #a8d5e2;
+  --accent: #ffba00;
+  --danger: #b31b1b;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #171a1f;
+    --card: #20252c;
+    --ink: #eceef1;
+    --muted: #9aa2ad;
+    --line: #353c46;
+    --wall: #6c665c;
+    --hatch: #4f565f;
+    --free: #6aa543;
+    --partial: #f9a620;
+    --busy: #3f4650;
+    --mine: #a8d5e2;
+    --locked: #272c33;
+    --sel: #eceef1;
+    --off: #262b32;
+    --pick: #4a86c6;
+    --accent: #ffba00;
+    --danger: #d9443f;
+  }
+}
+
+* { box-sizing: border-box; }
+/* `hidden` always wins, whatever display a component sets (e.g. the tooltip's inline-flex). */
+[hidden] { display: none !important; }
+body {
+  margin: 0;
+  padding: 12px 16px;
+  background: var(--bg);
+  color: var(--ink);
+  font: 14px/1.4 system-ui, -apple-system, "Segoe UI", "Malgun Gothic", sans-serif;
+}
+h1 { font-size: 20px; margin: 0; }
+h2 { font-size: 14px; margin: 0 0 6px; }
+button, input { font: inherit; color: inherit; }
+button {
+  background: var(--card); border: 1px solid var(--line); border-radius: 6px;
+  padding: 4px 12px; cursor: pointer;
+}
+.muted { color: var(--muted); }
+
+/* One viewport-wide spinner overlay that also blocks clicks while requests run */
+@keyframes spin { to { transform: rotate(360deg); } }
+.busy-overlay {
+  position: fixed; inset: 0; z-index: 100; display: grid; place-items: center;
+  background: color-mix(in srgb, var(--bg) 45%, transparent); cursor: progress;
+}
+.busy-overlay[hidden] { display: none; }
+.spinner {
+  width: 36px; height: 36px; border-radius: 50%; animation: spin .7s linear infinite;
+  border: 3px solid var(--muted); border-right-color: transparent;
+}
+button:disabled { cursor: default; }
+
+/* Login */
+.icon-btn { display: inline-grid; place-items: center; padding: 4px; margin-left: -12px; color: var(--muted); border-color: transparent; background: none; }
+.icon-btn:hover { color: var(--ink); background: var(--card); border-color: var(--line); }
+.icon-btn[hidden] { display: none; }
+.icon-btn.spinning svg { animation: spin .8s linear infinite; }
+.auth { margin-left: auto; display: flex; align-items: center; gap: 6px; font-size: 13px; }
+.auth .who strong { font-weight: 600; }
+.layout.blurred { filter: blur(6px); pointer-events: none; user-select: none; }
+.gate {
+  position: fixed; inset: 60px 0 0; z-index: 50; display: grid; place-items: center; pointer-events: none;
+}
+.gate-card {
+  pointer-events: auto; display: flex; flex-direction: column; align-items: center; gap: 12px;
+  padding: 18px 22px; border-radius: 12px; background: var(--card); border: 1px solid var(--line);
+  box-shadow: 0 6px 20px rgba(0,0,0,.12);
+}
+.gate-card p { margin: 0; font-size: 16px; font-weight: 600; }
+.login-form { display: flex; flex-direction: column; gap: 8px; width: 220px; }
+.login-form input {
+  padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg);
+}
+.login-form .primary { padding: 6px 12px; background: var(--ink); border-color: var(--ink); color: var(--bg); font-weight: 600; }
+.login-form .error { color: var(--danger); font-size: 13px; text-align: center; }
+.login-form .error:empty { display: none; }
+
+/* Date picker */
+.datepick { position: relative; }
+#date-btn { width: 100%; text-align: left; padding: 5px 10px; font-weight: 600; }
+#date-btn::after { content: '▾'; float: right; color: var(--muted); }
+.cal {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 20; background: var(--card);
+  border: 1px solid var(--line); border-radius: 10px; padding: 8px; box-shadow: 0 6px 20px rgba(0,0,0,.15);
+}
+.cal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.cal-head button { border: none; font-size: 18px; padding: 0 10px; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
+.cal-grid .wd { font-size: 11px; color: var(--muted); padding: 2px 0; }
+.cal-grid button { border: none; padding: 5px 0; border-radius: 6px; font-size: 13px; background: none; }
+.cal-grid button:hover:not(:disabled) {  box-shadow: inset 0 0 0 2px var(--mine); }
+.cal-grid button:hover:not(:disabled):focus { background: var(--pick); box-shadow: inset 0 0 0 2px var(--mine); }
+.cal-grid button:disabled { opacity: .3; }
+.cal-grid .dow0 { color: var(--danger); }
+.cal-grid .dow6 { color: var(--mine); }
+.cal-grid button.sel { box-shadow: inset 0 0 0 2px var(--accent); }
+.cal-grid .today { background: var(--off);  }
+
+header { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 20px; margin-bottom: 10px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px; }
+
+/* Desktop: everything fits in one viewport, no page scroll. */
+.layout { display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 12px; }
+.side { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+main { position: relative; display: flex; flex-direction: column; min-height: 0; }
+#map { flex: 1; min-height: 0; width: 100%; display: block; }
+@media (min-width: 801px) {
+  body { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+  .layout { flex: 1; min-height: 0; }
+  .side .mine { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  #mine { flex: 1; min-height: 0; overflow: auto; }
+  #clock { max-height: 42vh; }
+}
+@media (max-width: 800px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  #map { height: auto; }
+}
+
+/* 24h clock picker */
+#clock { width: 100%; min-height: 160px; display: block; margin: 6px auto 0; user-select: none; touch-action: none; cursor: pointer; }
+#clock .seg { stroke: var(--card); stroke-width: 1.5; fill: var(--locked); }
+#clock .seg.off { fill: transparent; stroke: var(--line); stroke-dasharray: 2 2; }
+#clock .seg.sel { fill: var(--mine); }
+#clock .seg.past { opacity: .35; }
+#clock .avail { fill: var(--sel); }
+#clock .num { font-size: 9px; text-anchor: middle; dominant-baseline: central; fill: var(--ink); pointer-events: none; }
+#clock .num.major, #clock .tick.major { font-size: 11px; font-weight: 700; }
+#clock .tick { font-size: 9px; text-anchor: middle; dominant-baseline: central; fill: var(--muted); pointer-events: none; }
+#clock .c1 { font-size: 15px; font-weight: 700; text-anchor: middle; fill: var(--ink); }
+#clock .c2 { font-size: 11px; text-anchor: middle; fill: var(--muted); }
+.hint { margin: 4px 2px 0; font-size: 12px; }
+
+.status.error { color: var(--danger); }
+
+/* My reservations */
+.mine table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.mine th { text-align: left; font-weight: 600; color: var(--muted); font-size: 12px; }
+.mine th, .mine td { padding: 3px 4px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.mine tr.past td { color: var(--muted); }
+.mine tr.today td:nth-child(2) { font-weight: 700; }
+.mine tr.can { cursor: pointer; }
+.mine tr.can:hover td { background: var(--bg); }
+.mine tr.picked td { background: color-mix(in srgb, var(--pick) 14%, var(--card)); }
+.mine td:first-child, .mine th:first-child { width: 20px; padding-right: 0; }
+.mine input[type=checkbox] { margin: 0; vertical-align: -2px; accent-color: var(--pick); pointer-events: none; }
+.mine .empty { margin: 0; font-size: 13px; }
+.cancel-btn { margin-top: 8px; width: 100%; background: var(--danger); border-color: var(--danger); color: #fff; font-weight: 600; padding: 6px 12px; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 4px 16px; list-style: none; padding: 0 2px; margin: 0 0 6px; color: var(--muted); font-size: 13px; }
+.sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+.sw.free { background: var(--free); }
+.sw.partial { background: var(--partial); }
+.sw.busy { background: var(--busy); }
+.sw.mine { background: var(--mine); }
+.sw.locked { background: repeating-linear-gradient(45deg, var(--locked) 0 3px, var(--hatch) 3px 4px); }
+
+svg .exterior { fill: none; stroke: var(--wall); stroke-width: 2.5; stroke-dasharray: 2 6; stroke-linecap: round; }
+svg .panel { fill: none; stroke: var(--line); stroke-width: 1.5; }
+svg .label { font-size: 12px; fill: var(--muted); text-anchor: middle; }
+svg .label.floor { font-size: 15px; font-weight: 700; fill: var(--ink); text-anchor: start; }
+
+svg .room rect { stroke: var(--card); stroke-width: 1.5; fill: var(--busy); transition: fill .15s; }
+svg .room text { font-size: 13px; font-weight: 600; text-anchor: middle; dominant-baseline: central; fill: var(--ink); pointer-events: none; }
+svg .room { cursor: pointer; }
+svg .room text {fill: #fff;}
+svg .room.free rect { fill: var(--free); }
+svg .room.mine text { fill: #1f2a37; }
+svg .room.partial rect { fill: var(--partial); }
+svg .room.mine rect { fill: var(--mine); }
+svg .room.locked rect { fill: url(#hatch-locked); }
+svg .room.busy text { fill: #1f2a37; }
+svg .room.locked text { fill: var(--muted); }
+svg .room.selected rect { stroke: var(--pick); stroke-width: 3; }
+svg .room:hover rect { filter: brightness(1.08); }
+
+/* 1D day strips (tooltip + detail panel) */
+.strip { display: flex; gap: 1px; }
+.strip span { flex: 1 0 0; height: 14px; border-radius: 2px; background: var(--busy); position: relative; }
+.strip .free { background: var(--free); }
+.strip .mine { background: var(--mine); }
+.strip .off { background: var(--off); }
+.strip .past { opacity: .35; }
+.strip .inwin::before {
+  content: ''; position: absolute; left: -1px; right: 0; bottom: -5px; height: 3px; background: var(--sel);
+}
+.strip span[data-h]::after {
+  content: attr(data-h); position: absolute; top: 19px; left: 0; font-size: .8em; color: var(--muted);
+}
+.strip.big { touch-action: none; user-select: none; cursor: pointer; transition: all .15s ease; }
+.strip.big span { height: 20px; opacity :.5; }
+.strip.big .sub { opacity:1; }
+/* Frame spanning a run of picked cells: 24 cells share the width with 1px gaps, so a cell starts at
+   i * (100% + 1px) / 24 and n cells span n * (100% + 1px) / 24 - 1px. */
+.strip.big { position: relative; }
+.strip .sub-run {
+  position: absolute; top: -4px; height: 28px; pointer-events: none; z-index: 1;
+  left: calc(var(--i) * (100% + 1px) / 24 - 4px);
+  width: calc(var(--n) * (100% + 1px) / 24 - 1px + 8px);
+  border: 3px solid var(--pick); border-radius: 6px;
+}
+.strip.big span[data-h]::after { top: 25px; }
+
+.detail {
+  position: absolute; left: 10px; right: 10px; bottom: 10px; background: var(--card); border: 1px solid var(--line);
+  border-radius: 10px; padding: 10px 12px 28px; box-shadow: 0 4px 16px rgba(0,0,0,.12);
+}
+.detail-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px; min-height: 30px; }
+.detail-actions { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.detail { user-select: none; }
+.reserve {
+  position: absolute; right: 0; bottom: calc(100% + 10px); padding: 10px 27px; font-size: 21px; font-weight: 600; border-radius: 9px;
+  background: var(--pick); border-color: var(--pick); color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,.18);
+  opacity: 0; visibility: hidden; transform: translateY(12px);
+  transition: opacity .18s ease, transform .18s ease, visibility 0s linear .18s;
+}
+.reserve.show { opacity: 1; visibility: visible; transform: none; transition: opacity .18s ease, transform .18s ease; }
+#detail-close { padding: 2px 9px; font-size: 16px; line-height: 1.2; }
+
+.tooltip {
+  position: fixed; pointer-events: none; z-index: 10; background: var(--card); color: var(--ink);
+  display : inline-flex; flex-direction: row; gap: 4px; text-align: left;
+  border: 1px solid var(--line); box-shadow: 0 4px 16px rgba(0,0,0,.15);
+  padding: 7px 9px 24px; border-radius: 8px; font-size: 12px; width: 260px;
+}
+
+.tooltip b { font-size: 1.3em; line-height: 2em; font-weight: 600; }
+
+.tooltip .strip { flex: 1; margin-top: 4px; }

@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Library Room Finder</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Library Room Finder</h1>
+    <span id="quota" class="muted"></span>
+    <span id="status" class="status"></span>
+    <button type="button" id="refresh" class="icon-btn" title="Refresh now (auto-refreshes every 20 s)" aria-label="Refresh">
+      <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+        <path d="M20 12a8 8 0 1 1-2.34-5.66" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+        <path d="M20 4v5h-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    <div id="auth" class="auth"></div>
+  </header>
+
+  <div id="gate" class="gate" hidden>
+    <div class="gate-card">
+      <p>Log in first</p>
+      <form id="login-form" class="login-form">
+        <input name="id" placeholder="ID" autocomplete="username" required>
+        <input name="password" type="password" placeholder="Password" autocomplete="current-password" required>
+        <button type="submit" class="primary">Log in</button>
+        <span class="error" id="login-error"></span>
+      </form>
+    </div>
+  </div>
+  <div id="busy" class="busy-overlay" hidden><span class="spinner" role="status" aria-label="Loading"></span></div>
+
+  <div class="layout">
+    <aside class="side">
+      <section class="card">
+        <div class="datepick">
+          <button type="button" id="date-btn" aria-haspopup="dialog"></button>
+          <div id="cal" class="cal" role="dialog" aria-label="Choose date" hidden></div>
+        </div>
+        <svg id="clock" viewBox="-135 -135 270 270" role="img" aria-label="24-hour time window picker"></svg>
+        <p class="muted hint">Drag around the clock to pick a time window.</p>
+      </section>
+      <section class="card mine">
+        <h2>My reservations</h2>
+        <div id="mine"></div>
+        <button type="button" class="cancel-btn" id="cancel-picked" hidden>Cancel</button>
+      </section>
+    </aside>
+
+    <main class="card">
+      <ul class="legend">
+        <li><i class="sw free"></i>Free</li>
+        <li><i class="sw partial"></i>Partially free</li>
+        <li><i class="sw busy"></i>Taken</li>
+        <li><i class="sw mine"></i>Yours</li>
+        <li><i class="sw locked"></i>Unavailable</li>
+      </ul>
+      <svg id="map" role="img" aria-label="2F and 3F map"></svg>
+      <aside id="detail" class="detail" hidden>
+        <button type="button" class="reserve" id="reserve">Reserve</button>
+        <div id="detail-body"></div>
+      </aside>
+    </main>
+  </div>
+
+  <div id="tooltip" class="tooltip" hidden></div>
+
+  <script src="map.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
