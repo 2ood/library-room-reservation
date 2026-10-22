@@ -20,11 +20,19 @@ The official page makes you pick one room from a dropdown and read its calendar,
 - **Per-tab login.** You log in with your own library account; the session ends when the tab is closed.
 - **No backend needed.** The page talks to the library's API from your browser, so it can be hosted on GitHub Pages.
 
+## How to Use
+
+### 1. Login with GIST Library account
+![Login screen](thumbnail/login.png) 
+
+### 2. Pick a date & time window
+![Sunday-first date picker](thumbnail/calendar.png) 
+
+### 3. Book a room
 ![Booking: a partly free room with a picked stretch and the Reserve button](thumbnail/booking.png)
 
-| Date picker | Login |
-| --- | --- |
-| ![Sunday-first date picker](thumbnail/calendar.png) | ![Login screen](thumbnail/login.png) |
+
+
 
 ## Running it
 
