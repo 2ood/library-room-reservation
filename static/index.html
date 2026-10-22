@@ -8,10 +8,10 @@
 </head>
 <body>
   <header>
-    <h1>Library Room Finder</h1>
+    <h1>Library Room Finder <span class="badge" title="Not affiliated with the GIST Library">Unofficial</span></h1>
     <span id="quota" class="muted"></span>
     <span id="status" class="status"></span>
-    <button type="button" id="refresh" class="icon-btn" title="Refresh now (auto-refreshes every 20 s)" aria-label="Refresh">
+    <button type="button" id="refresh" class="icon-btn" title="Refresh now (auto-refreshes every minute)" aria-label="Refresh">
       <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
         <path d="M20 12a8 8 0 1 1-2.34-5.66" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
         <path d="M20 4v5h-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -29,6 +29,8 @@
         <button type="submit" class="primary">Log in</button>
         <span class="error" id="login-error"></span>
       </form>
+      <p class="notice">Unofficial tool, not affiliated with the GIST Library.<br>
+        Your ID and password are sent only to <b>library.gist.ac.kr</b>,<br>and the login ends when you close this tab.</p>
     </div>
   </div>
   <div id="busy" class="busy-overlay" hidden><span class="spinner" role="status" aria-label="Loading"></span></div>
@@ -69,6 +71,7 @@
   <div id="tooltip" class="tooltip" hidden></div>
 
   <script src="map.js"></script>
+  <script src="library.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

@@ -13,6 +13,7 @@ const state = {
   maxDate: null,    // last bookable date (from the server)
   calMonth: null,   // first day of the month shown in the date picker
   user: null,       // { id, name } of the logged-in library account
+  dragging: false,  // a clock or strip drag is in progress (pauses the rolling refresh)
 };
 
 function localDate(d) {
@@ -38,10 +39,7 @@ function fmtRanges(hs) {
   return parts.join(', ');
 }
 
-function roomLabel(id) {
-  const room = state.day.rooms[id];
-  return room ? `Room ${id}` : `Room ${id}`;
-}
+const roomLabel = id => `Room ${id}`;
 
 // ---- status helpers --------------------------------------------------------
 
@@ -391,25 +389,13 @@ function bookProblem(room, hs) {
   return null;
 }
 
-// The login session token lives in sessionStorage: it survives reloads but ends with the tab.
-const session = {
-  get() { try { return sessionStorage.getItem('session') || ''; } catch { return ''; } },
-  set(token) { try { token ? sessionStorage.setItem('session', token) : sessionStorage.removeItem('session'); } catch {} },
-};
-
-function api(url, opts = {}) {
-  return fetch(url, { ...opts, headers: { ...opts.headers, 'X-Session': session.get() } }).then(r => r.json());
-}
-
-async function post(url, body) {
-  const res = await api(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  if (res.error === 'login') setUser(null);
-  if (res.error) throw new Error(res.error === 'login' ? 'Logged out' : res.error);
-  return res;
+// The library token expired (it lasts about 13 h): drop it and ask for a fresh login.
+function handleExpired(err) {
+  if (!(err instanceof Library.SessionExpired)) return false;
+  Library.logout();
+  setUser(null);
+  $('#login-error').textContent = 'Session expired. Please log in again.';
+  return true;
 }
 
 // A single blocking spinner overlay; nested requests keep it up until the last one finishes.
@@ -423,12 +409,13 @@ function busy(on) {
 async function reserve(id, hs) {
   busy(true);
   try {
-    const res = await post('/api/reserve', { roomId: id, date: ymd(state.date), hours: hs });
+    const res = await Library.reserve(id, ymd(state.date), hs);
     if (res.message) {
       const ok = res.booked.length ? `Booked ${fmtRanges(res.booked)}.` : 'Nothing booked.';
       alert(`${ok} Stopped: ${res.message}.`);
     }
   } catch (err) {
+    if (handleExpired(err)) return busy(false);
     alert('Reservation failed: ' + err.message);
   }
   await load();
@@ -444,18 +431,19 @@ function setStatus(text, isError) {
 }
 
 let loadSeq = 0;
+let failures = 0;  // consecutive failed loads, for backing off the rolling refresh
 
 // `silent` is the rolling refresh: no blocking overlay, and the room / window / strip selections are kept.
-async function load({ silent = false } = {}) {
+// `fresh` skips the library client's 30 s per-date cache.
+async function load({ silent = false, fresh = false } = {}) {
   const seq = ++loadSeq;  // only the latest request may update the page
   const prev = state.day ? selectedHours() : [];
   if (!silent) setStatus('Loading availability…');
   silent ? $('#refresh').classList.add('spinning') : busy(true);
   try {
-    const day = await api(`/api/day?date=${ymd(state.date)}`);
+    const day = await Library.getDay(ymd(state.date), { fresh });
     if (seq !== loadSeq) return;
-    if (day.error === 'login') return setUser(null);
-    if (day.error) throw new Error(day.error);
+    failures = 0;
     state.day = day;
     if (!silent) hideTip();  // its contents describe the old data
     state.hours = [...new Set(Object.values(day.rooms).flatMap(r => Object.keys(r.hours).map(Number)))].sort((a, b) => a - b);
@@ -466,18 +454,56 @@ async function load({ silent = false } = {}) {
     setStatus(`Updated ${new Date().toLocaleTimeString()}`);
     render();
   } catch (err) {
-    setStatus('Could not load availability: ' + err.message, true);
+    if (!handleExpired(err)) {
+      failures++;
+      setStatus('Could not load availability: ' + err.message, true);
+    }
   } finally {
     silent ? $('#refresh').classList.remove('spinning') : busy(false);
   }
 }
 
-// Rolling refresh every 20 s; skipped while the tab is hidden, a request is running or the user is dragging.
-const REFRESH_MS = 20000;
-state.dragging = false;
-setInterval(() => {
-  if (state.user && !document.hidden && busyCount === 0 && !state.dragging) load({ silent: true });
-}, REFRESH_MS);
+// ---- rolling refresh, throttled to go easy on the library's server ---------
+// Every 60 s while the tab is visible and in use; backs off (up to 5 min) after failures,
+// pauses after 10 min without input, and never runs during a drag or another request.
+const REFRESH_MS = 60000;
+const MAX_BACKOFF_MS = 5 * 60000;
+const IDLE_MS = 10 * 60000;
+const MANUAL_GAP_MS = 5000;  // minimum time between manual refreshes
+let refreshTimer = null;
+let lastInput = Date.now();
+let idlePaused = false;
+
+function scheduleRefresh() {
+  clearTimeout(refreshTimer);
+  refreshTimer = setTimeout(autoRefresh, Math.min(REFRESH_MS * 2 ** failures, MAX_BACKOFF_MS));
+}
+
+async function autoRefresh() {
+  if (Date.now() - lastInput > IDLE_MS) {
+    idlePaused = true;
+    setStatus('Auto-refresh paused while idle');
+    return;  // resumes on the next input
+  }
+  if (state.user && !document.hidden && busyCount === 0 && !state.dragging) await load({ silent: true, fresh: true });
+  scheduleRefresh();
+}
+
+function setupRefresh() {
+  const markInput = () => {
+    lastInput = Date.now();
+    if (idlePaused) { idlePaused = false; autoRefresh(); }
+  };
+  ['pointerdown', 'keydown', 'wheel', 'pointermove'].forEach(t => document.addEventListener(t, markInput, { passive: true }));
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && state.user) autoRefresh(); });
+  $('#refresh').addEventListener('click', () => {
+    const btn = $('#refresh');
+    btn.disabled = true;
+    setTimeout(() => { btn.disabled = false; }, MANUAL_GAP_MS);
+    load({ fresh: true }).then(scheduleRefresh);
+  });
+  scheduleRefresh();
+}
 
 // ---- login -----------------------------------------------------------------
 
@@ -515,9 +541,7 @@ function setupAuth() {
     const form = new FormData(e.target);
     busy(true);
     try {
-      const res = await post('/api/login', { id: form.get('id'), password: form.get('password') });
-      session.set(res.token);
-      setUser(res.user);
+      setUser(await Library.login(form.get('id'), form.get('password')));
       await load();
     } catch (err) {
       $('#login-error').textContent = err.message;
@@ -527,8 +551,7 @@ function setupAuth() {
   });
   $('#auth').addEventListener('click', async e => {
     if (!e.target.closest('#logout')) return;
-    await post('/api/logout', {});
-    session.set(null);
+    Library.logout();
     setUser(null);
   });
 }
@@ -603,11 +626,12 @@ async function cancelPicked() {
   busy(true);
   try {
     const items = rows.flatMap(r => r.cancellable).map(({ date, room, hour, resId }) => ({ date, room, hour, resId }));
-    const res = await post('/api/cancel', { items });
+    const res = await Library.cancel(items);
     if (res.failed.length) {
       alert('Could not cancel: ' + res.failed.map(i => `Room ${i.room} ${pad(i.hour)}:00 on ${i.date}`).join(', '));
     }
   } catch (err) {
+    if (handleExpired(err)) return busy(false);
     alert('Cancellation failed: ' + err.message);
   }
   state.picked.clear();
@@ -698,9 +722,7 @@ setupMine();
 setupDatePicker();
 setupAuth();
 setupTip();
+setupRefresh();
 renderDateButton();
-$('#refresh').addEventListener('click', () => load());
-api('/api/me').then(({ user }) => {
-  setUser(user);
-  if (user) load();
-});
+setUser(Library.user());
+if (state.user) load();
