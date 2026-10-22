@@ -98,3 +98,7 @@ Please keep these limits if you fork the project.
   library's rules (daily/monthly limits, no 1-hour gap between your own bookings); the library's server has the final say.
 - It relies on the library's API accepting calls from other websites. If that changes, the GitHub Pages version will
   stop working; run it locally with `server.py` instead.
+
+## License
+
+[MIT](LICENSE)
