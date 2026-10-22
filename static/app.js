@@ -511,7 +511,8 @@ function setUser(user) {
   state.user = user;
   const auth = $('#auth');
   if (user) {
-    auth.innerHTML = `<span class="who"><strong>${user.name}</strong> <span class="muted">${user.id}</span></span>
+    auth.innerHTML = `<button type="button" id="how-to" class="how-to">How to use</button>
+      <span class="who"><strong>${user.name}</strong> <span class="muted">${user.id}</span></span>
       <button type="button" id="logout">Log out</button>`;
     $('#login-form').reset();
     $('#login-error').textContent = '';
@@ -532,24 +533,32 @@ function setUser(user) {
   $('.layout').classList.toggle('blurred', !user);
   $('#gate').hidden = !!user;
   $('#refresh').hidden = !user;
-  if (!user) $('#login-form [name=id]').focus();
+  if (!user) {
+    $('#login-form [name=tutorial]').checked = !Tour.seen();  // ticked until the tour has been seen once
+    $('#login-form [name=id]').focus();
+  }
 }
 
 function setupAuth() {
   $('#login-form').addEventListener('submit', async e => {
     e.preventDefault();
     const form = new FormData(e.target);
+    let loggedIn = false;
     busy(true);
     try {
       setUser(await Library.login(form.get('id'), form.get('password')));
+      loggedIn = true;
       await load();
     } catch (err) {
       $('#login-error').textContent = err.message;
     } finally {
       busy(false);
     }
+    // Start the walkthrough once the map is loaded and the spinner is gone, if the box was ticked.
+    if (loggedIn && form.get('tutorial') && state.user) Tour.start();
   });
   $('#auth').addEventListener('click', async e => {
+    if (e.target.closest('#how-to')) return Tour.start();
     if (!e.target.closest('#logout')) return;
     Library.logout();
     setUser(null);

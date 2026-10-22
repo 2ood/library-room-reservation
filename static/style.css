@@ -57,6 +57,7 @@ button {
   background: var(--card); border: 1px solid var(--line); border-radius: 6px;
   padding: 4px 12px; cursor: pointer;
 }
+button:active { background: var(--line); }
 .muted { color: var(--muted); }
 
 /* One viewport-wide spinner overlay that also blocks clicks while requests run */
@@ -99,6 +100,8 @@ button:disabled { cursor: default; }
   padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg);
 }
 .login-form .primary { padding: 6px 12px; background: var(--ink); border-color: var(--ink); color: var(--bg); font-weight: 600; }
+.login-form .check { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); cursor: pointer; }
+.login-form .check input { accent-color: var(--pick); }
 .login-form .error { color: var(--danger); font-size: 13px; text-align: center; }
 .login-form .error:empty { display: none; }
 
@@ -253,3 +256,28 @@ svg .room:hover rect { filter: brightness(1.08); }
 .tooltip b { font-size: 1.3em; line-height: 2em; font-weight: 600; }
 
 .tooltip .strip { flex: 1; margin-top: 4px; }
+
+/* topbar buttons */
+#how-to { font-weight: 600; background-color: none; border: none; color: var(--pick); text-decoration: underline; }
+#how-to:active { color: var(--mine); text-decoration: none; }
+#logout { font-weight: 600; color: var(--pick); border-color: var(--pick); }
+
+/* Walkthrough overlay */
+.tour { position: fixed; inset: 0; z-index: 200; }
+.tour-block { position: absolute; inset: 0; }  /* swallows clicks so nothing is pressed by accident */
+.tour-spot {
+  position: fixed; border-radius: 10px; pointer-events: none;
+  box-shadow: 0 0 0 9999px rgba(20, 24, 30, .55); transition: all .25s ease;
+}
+.tour-card {
+  position: fixed; width: 300px; padding: 14px 16px 12px; border-radius: 12px;
+  background: var(--card); border: 1px solid var(--line); box-shadow: 0 8px 28px rgba(0,0,0,.25);
+  transition: left .25s ease, top .25s ease;
+}
+.tour-title { display: block; font-size: 15px; margin: 0 22px 6px 0; }
+.tour-text { margin: 0 0 12px; font-size: 13px; line-height: 1.5; }
+.tour-close { position: absolute; top: 8px; right: 8px; border: none; background: none; font-size: 18px; padding: 0 6px; }
+.tour-nav { display: flex; align-items: center; gap: 6px; }
+.tour-count { margin-right: auto; font-size: 12px; }
+.tour-nav .primary { background: var(--pick); border-color: var(--pick); color: #fff; font-weight: 600; }
+.tour-nav .primary:active { background: var(--mine); color: #fff; }
