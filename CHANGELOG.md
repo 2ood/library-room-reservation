@@ -15,6 +15,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - "Unofficial" badge next to the title, and a notice on the login card stating the tool is not affiliated with the
   GIST Library and that the ID and password are sent only to `library.gist.ac.kr`.
 - A "Session expired" message when the library's login token (about 13 hours) runs out.
+- "How to use" walkthrough: a six-step guided tour that highlights the date picker, clock, map, room panel,
+  reservations and limits. Open it from the "How to use" button next to your name, or tick
+  "Show tutorial after login" on the login card (ticked until the tour has been seen once in that browser).
+  It only explains; it never books or cancels anything.
 
 ### Changed
 - `server.py` is now an optional local server: it serves `static/` and passes `/lib/*` requests through to the library
